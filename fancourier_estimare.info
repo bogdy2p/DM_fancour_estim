@@ -1,0 +1,5 @@
+name = Fancourier Estimare PBC
+description = Fancourier Estimare Transport Module try by pbc
+core = 7.x
+package = Experimental
+dependencies[] = fancourier

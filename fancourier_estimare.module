@@ -1,0 +1,133 @@
+<?php
+
+//require_once('fancourier.class.php');
+//module_load_include('php', 'fancourier', 'fancourier.class.php');
+
+/*
+ * @file
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+/**
+ * Implementing hook_menu();
+ */
+function fancourier_estimare_menu() {
+  $items['admin/config/fancourier'] = array(
+    'title' => 'Fancourier Estimare',
+    'description' => 'Fancourier Estimare Description',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fancourier_estimare_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'menu_name' => 'management',
+    'weight' => -5,
+  );
+  return $items;
+}
+
+function fancourier_estimare_form($form, &$form_state) {
+  
+  $adrese = get_adress_data_by_nodeid();
+  $grabbed_enabled_transport_types = get_fancourier_services_enabled(); 
+  $form['adresses'] = array(
+    '#type' => 'select',
+    '#title' => 'Adresa Destinatie',
+    '#description' => t('translatable description.'),
+    '#options' => $adrese,
+  );
+  
+  $form['selected_transport_type'] = array(
+    '#type' => 'select',
+    '#title' => 'Tip transport:',
+    '#description' => t('transalfsdf description'),
+    '#options' => $grabbed_enabled_transport_types,
+  );
+  
+  $fancourier_array = variable_get('fancourier');
+  $transport_types = array(); //initializing transport_types array.
+  foreach ($fancourier_array['services'] as $key => $value) {
+      $transport_types[] = $key;
+  } 
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Estimeaza taxa transport !',   
+  );
+  return $form;
+}
+function get_adresses_node_object() {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+  ->entityCondition('bundle', 'adresa')
+  ->propertyCondition('status', 1)
+  ->addMetaData('account', user_load(1)); // Run the query as user 1.
+  $result = $query->execute();
+  
+if (isset($result['node'])) {
+  $addresses_nids = array_keys($result['node']);
+  $addresses_objects = entity_load('node', $addresses_nids);
+}
+ return $addresses_objects; 
+}
+
+function get_adress_data_by_nodeid(){
+  $objects = get_adresses_node_object();
+  foreach ($objects as $key => $value){
+     $nodeid_array[$key] = $value->nid;
+  }
+  $query = db_select('field_data_field_addressfield', 'addressfield')
+    ->fields('addressfield')
+    ->condition('entity_id',$nodeid_array)
+    ->orderBy('field_addressfield_locality', 'DESC')//ORDER BY created
+    ->range(0,14);//LIMIT to 2 records
+
+    $results= $query->execute();
+  foreach ($results as $key => $value) {
+    //dpm($value->field_addressfield_thoroughfare);
+    $adrese[$key] = $value->field_addressfield_thoroughfare;
+  }
+  //dpm($adrese);
+  return $adrese;
+}
+
+function get_fancourier_services_enabled(){
+  $fancourier_variable = variable_get('fancourier');
+  $services_enabled = $fancourier_variable['services'];
+  
+  foreach ($services_enabled as $key => $value){
+     $service_enabled[] = $value;
+  }
+  return $service_enabled;
+}
+
+
+function fancourier_estimare_form_submit($form, &$form_state) {
+ dpm('save button has been pressed. here\'s the form: ');
+ dpm($form);
+ dpm('the form state : ');
+ dpm($form_state);
+}
+
+
+
+
+
+//Functia la care am renuntat
+//function get_addresses_node_ids() {
+//  $query_addresses = get_adresses_node_object();
+//  $nodeids_adresses = array();
+//  foreach ($query_addresses as $key => $values){
+//    $nodeids_adresses[$key] = $values->nid;
+//  }
+//return $nodeids_adresses;
+//}
+function fancourier_estimare_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'fancourier_form') {
+     $form['#submit'][] = 'fancourier_submit_handler';
+  }
+}
+function fancourier_submit_handler(&$form, &$form_state) {
+  $form_state['redirect'] = 'admin/config/fancourier';
+}
