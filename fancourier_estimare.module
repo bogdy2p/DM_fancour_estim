@@ -102,7 +102,6 @@ function get_fancourier_services_enabled(){
   return $service_enabled;
 }
 
-
 function fancourier_estimare_form_submit($form, &$form_state) {
  dpm('save button has been pressed. here\'s the form: ');
  dpm($form);
