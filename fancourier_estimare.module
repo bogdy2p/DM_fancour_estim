@@ -45,11 +45,7 @@ function fancourier_estimare_form($form, &$form_state) {
     '#options' => $grabbed_enabled_transport_types,
   );
   
-  $fancourier_array = variable_get('fancourier');
-  $transport_types = array(); //initializing transport_types array.
-  foreach ($fancourier_array['services'] as $key => $value) {
-      $transport_types[] = $key;
-  } 
+  //$fancourier_array = variable_get('fancourier');
   
   $form['submit'] = array(
     '#type' => 'submit',
@@ -67,51 +63,92 @@ function get_adresses_node_object() {
   
 if (isset($result['node'])) {
   $addresses_nids = array_keys($result['node']);
+  $addresses_values = array_values($result['node']);
   $addresses_objects = entity_load('node', $addresses_nids);
 }
+ // Array Keys , array values
+ //$asddd = $addresses_objects[$addresses_nids]->title;
+ //dpm($asddd);
+ //dpm($result);
+//dpm($addresses_objects);
  return $addresses_objects; 
 }
-
+/**
+ * THIS DOESNT GO AS PLANNED
+ * @return type
+ */
 function get_adress_data_by_nodeid(){
   $objects = get_adresses_node_object();
   foreach ($objects as $key => $value){
-     $nodeid_array[$key] = $value->nid;
+    $nodeid_array[] = $value->nid;
   }
   $query = db_select('field_data_field_addressfield', 'addressfield')
     ->fields('addressfield')
     ->condition('entity_id',$nodeid_array)
     ->orderBy('field_addressfield_locality', 'DESC')//ORDER BY created
-    ->range(0,14);//LIMIT to 2 records
+    ->range(0,500);//LIMIT to 2 records
 
     $results= $query->execute();
+    
   foreach ($results as $key => $value) {
-    //dpm($value->field_addressfield_thoroughfare);
-    $adrese[$key] = $value->field_addressfield_thoroughfare;
+    $entity_id = $value->entity_id;//dpm($value->field_addressfield_thoroughfare);\
+    $city = $value->field_addressfield_locality;
+    $strada = $value->field_addressfield_thoroughfare;
+    $cod_tara = $value->field_addressfield_country;
+    $nume_complet = $value->field_addressfield_name_line;
+    //UNCOMMENT TO VIEW COMPLETE DATA    
+    //dpm('EntityID : ' . $entity_id . ' Oras: ' . $city . ' Strada: ' . $strada . ' Tara: ' . $cod_tara . ' Nume complet: ' . $nume_complet);
+    $adrese[$strada] = $strada;
   }
-  //dpm($adrese);
   return $adrese;
 }
+//entity_type (String, 4 characters ) node
+//bundle (String, 6 characters ) adresa
+//deleted (String, 1 characters ) 0
+//entity_id (String, 1 characters ) 9
+//revision_id (String, 1 characters ) 9
+//language (String, 3 characters ) und
+//delta (String, 1 characters ) 0
+//field_addressfield_country (String, 2 characters ) RO
+//field_addressfield_administrative_area (NULL)
+//field_addressfield_sub_administrative_area (NULL)
+//field_addressfield_locality (String, 11 characters ) Targu Mures
+//field_addressfield_dependent_locality (NULL)
+//field_addressfield_postal_code (String, 6 characters ) 550014
+//field_addressfield_thoroughfare (String, 15 characters ) Transilvania 54
+//field_addressfield_premise (String, 0 characters )
+//field_addressfield_sub_premise (NULL)
+//field_addressfield_organisation_name (NULL)
+//field_addressfield_name_line (String, 10 characters ) Vasile Ion
+//field_addressfield_first_name (String, 6 characters ) Vasile
+//field_addressfield_last_name (String, 3 characters ) Ion
+//field_addressfield_data (NULL)
 
 function get_fancourier_services_enabled(){
   $fancourier_variable = variable_get('fancourier');
   $services_enabled = $fancourier_variable['services'];
   
   foreach ($services_enabled as $key => $value){
-     $service_enabled[] = $value;
+     $service_enabled[$key] = $value;
   }
+  //dpm($service_enabled);
   return $service_enabled;
 }
 
 function fancourier_estimare_form_submit($form, &$form_state) {
- dpm('save button has been pressed. here\'s the form: ');
- dpm($form);
- dpm('the form state : ');
- dpm($form_state);
+   if (isset($form_state['values'])){
+    dpm('exista formstate de values. il printam');
+    dpm($form_state['values']);
+  }else{
+    dpm('nu exista form state de values');
+  }
+  
+// dpm('save button has been pressed. here\'s the form: ');
+// dpm($form);
+// dpm('the form state dupa submit: ');
+// dpm($form_state);
+  
 }
-
-
-
-
 
 //Functia la care am renuntat
 //function get_addresses_node_ids() {
