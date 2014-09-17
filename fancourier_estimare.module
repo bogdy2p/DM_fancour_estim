@@ -77,16 +77,16 @@ if (isset($result['node'])) {
  * THIS DOESNT GO AS PLANNED
  * @return type
  */
-function get_adress_data_by_nodeid(){
+function get_adress_data_by_nodeid() {
   $objects = get_adresses_node_object();
-  foreach ($objects as $key => $value){
+  foreach ($objects as $key => $value) {
     $nodeid_array[] = $value->nid;
   }
   $query = db_select('field_data_field_addressfield', 'addressfield')
     ->fields('addressfield')
-    ->condition('entity_id',$nodeid_array)
+    ->condition('entity_id', $nodeid_array)
     ->orderBy('field_addressfield_locality', 'DESC')//ORDER BY created
-    ->range(0,500);//LIMIT to 2 records
+    ->range(0, 500);//LIMIT to 2 records
 
     $results= $query->execute();
     
@@ -124,11 +124,11 @@ function get_adress_data_by_nodeid(){
 //field_addressfield_last_name (String, 3 characters ) Ion
 //field_addressfield_data (NULL)
 
-function get_fancourier_services_enabled(){
+function get_fancourier_services_enabled() {
   $fancourier_variable = variable_get('fancourier');
   $services_enabled = $fancourier_variable['services'];
   
-  foreach ($services_enabled as $key => $value){
+  foreach ($services_enabled as $key => $value) {
      $service_enabled[$key] = $value;
   }
   //dpm($service_enabled);
@@ -136,10 +136,11 @@ function get_fancourier_services_enabled(){
 }
 
 function fancourier_estimare_form_submit($form, &$form_state) {
-   if (isset($form_state['values'])){
+   if (isset($form_state['values'])) {
     dpm('exista formstate de values. il printam');
     dpm($form_state['values']);
-  }else{
+  }
+  else{
     dpm('nu exista form state de values');
   }
   
