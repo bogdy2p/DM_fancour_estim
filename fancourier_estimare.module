@@ -30,7 +30,7 @@ function fancourier_estimare_menu() {
  */
 function fancourier_estimare_form($form, &$form_state) {
   //Grabbing form adress data options..
-  $adrese = get_adress_data_by_nodeid();
+   $adrese = get_adress_data_by_nodeid();
   //Grabbing form transport types options..
   $grabbed_enabled_transport_types = get_fancourier_services_enabled(); 
    
@@ -58,14 +58,11 @@ function fancourier_estimare_form($form, &$form_state) {
       'effect' => 'fade',
     ),
   );
-  /////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////
-  /// Zona in care se va updata pretul
+  ////////////////////////////////////////////////////
+  /// Area to display the price
   ////////////////////////////////////////////////////
   $form['transport_taxes'] = array(
     '#title' => t("Taxe Transport"),
-    // The prefix/suffix provide the div that we're replacing, named by
-    // #ajax['wrapper'] above.
     '#prefix' => '<div id="taxetransport">',
     '#suffix' => '</div>',
     '#type' => 'markup',
@@ -75,6 +72,7 @@ function fancourier_estimare_form($form, &$form_state) {
   );
   return $form;
 }
+
 /**
  * EFQ sql querry to return a list of nodes with "adresa" bundle.
  * @return type List of Objects 
@@ -95,6 +93,7 @@ if (isset($result['node'])) {
   //dpm($addresses_objects);
  return $addresses_objects; 
 }
+
 /**
  * Function to grab nodes , and node's data
  * @return type array of node id's from the node.
@@ -109,20 +108,19 @@ function get_adress_data_by_nodeid() {
     ->condition('entity_id', $nodeid_array)
     ->orderBy('field_addressfield_locality', 'DESC')//ORDER BY created
     ->range(0, 500);//LIMIT to 2 records
-    $results= $query->execute();
+    $results= $query->execute(); 
   foreach ($results as $key => $value) {
     $entity_id = $value->entity_id;//dpm($value->field_addressfield_thoroughfare);\
     $city = $value->field_addressfield_locality;
+    $judet = $value->field_addressfield_administrative_area;
     $strada = $value->field_addressfield_thoroughfare;
     $cod_tara = $value->field_addressfield_country;
     $nume_complet = $value->field_addressfield_name_line;
-    //UNCOMMENT TO VIEW COMPLETE DATA    
-    //dpm('EntityID : ' . $entity_id . ' Oras: ' . $city . ' Strada: ' . $strada . ' Tara: ' . $cod_tara . ' Nume complet: ' . $nume_complet);
-    //$adrese[$entity_id] = $city; // Aici e return-ul pentru select-ul adresei de destinatie
-    $adrese[$city] = $city; // Aici e return-ul pentru select-ul adresei de destinatie
+    $adrese[$city] = $city;
   }
   return $adrese;
 }
+
 /**
  * Function that returns an array of the enabled services 
  * (fancourier transport types) within the database.
@@ -136,6 +134,7 @@ function get_fancourier_services_enabled() {
   }
   return $service_enabled;
 }
+
 /**
  * Implements hook_form_alter().
  * @param string $form
@@ -147,6 +146,7 @@ function fancourier_estimare_form_alter(&$form, &$form_state, $form_id) {
      $form['#submit'][] = 'fancourier_submit_handler';
   }
 }
+
 /**
  * Function to redirect after clicking submit
  */
@@ -163,9 +163,11 @@ function fancourier_submit_handler(&$form, &$form_state) {
 function fancourier_estimare_taxetransport_callback($form, $form_state) {
   $shipping_service = $form_state['values']['selected_transport_type'];
   $shipping_adress = $form_state['values']['addresses'];
-  $shipping_default = array(
+  dpm('Transport ' . $shipping_service . ' catre ' .$shipping_adress . ' ar costa : ' );
+  
+  $shipping_defaults = array(
     'localitate_dest' => '',
-    'judet_dest' => 'Mures',
+    'judet_dest' => 'Bucuresti',
     'plicuri' => '0',
     'colete' => '1',
     'greutate' => '1',
@@ -178,8 +180,7 @@ function fancourier_estimare_taxetransport_callback($form, $form_state) {
   );
   // As long as you're dealing with string keys, array_merge does exactly what you want. 
   //The two arrays are combined, and where the two have the same keys, the values from $second overwrite the values from $first.
-  $shipping = array_merge($shipping_default, $shipping_override);
-  
+  $shipping = array_merge($shipping_defaults, $shipping_override);
   // Get shipping amount.
   $db_fan_login = variable_get('fancourier', array());
   $fan = new FanCourier($db_fan_login['login']);
@@ -189,27 +190,3 @@ function fancourier_estimare_taxetransport_callback($form, $form_state) {
   $form['transport_taxes']['#markup'] = $display_frumos;
   return $form['transport_taxes'];
 }
-
-/**
- * Implements hook_form_submit();
- * Deocamdata printam valorile celor 2 field-uri...
- * @param type $form
- * @param type $form_state
- */
-//UNNECESARY IF USING AJAX TO DISPLAY
-//function fancourier_estimare_form_submit($form, &$form_state) {
-//  if (isset($form_state['values'])) {
-//    //dpm('exista formstate de values. il printam');
-//    //dpm($form_state['values']);
-//    
-//    $DATA_adress_nid = $form_state['values']['adresses'];
-//    $DATA_transport_type = $form_state['values']['selected_transport_type'];
-//    dpm("Address node is : " . $DATA_adress_nid);
-//    dpm("Transporttype is : " . $DATA_transport_type);
-//    dpm("this data should be used by AJAX to display information about the price");
-//    
-//  }
-//  else{
-//    dpm('nu exista form state de values');
-//  }
-//}
