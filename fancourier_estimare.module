@@ -39,6 +39,12 @@ function fancourier_estimare_form($form, &$form_state) {
     '#title' => 'Tip transport:',
     '#description' => t('transalfsdf description'),
     '#options' => $grabbed_enabled_transport_types,
+    '#ajax' => array(
+      'callback' => 'fancourier_estimare_taxetransport_callback',
+      'wrapper' => 'taxetransport',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
   );
   $form['addresses'] = array(
     '#type' => 'select',
@@ -52,7 +58,6 @@ function fancourier_estimare_form($form, &$form_state) {
       'effect' => 'fade',
     ),
   );
- 
   /////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////
   /// Zona in care se va updata pretul
@@ -132,28 +137,6 @@ function get_fancourier_services_enabled() {
   return $service_enabled;
 }
 /**
- * Implements hook_form_submit();
- * Deocamdata printam valorile celor 2 field-uri...
- * @param type $form
- * @param type $form_state
- */
-function fancourier_estimare_form_submit($form, &$form_state) {
-  if (isset($form_state['values'])) {
-    //dpm('exista formstate de values. il printam');
-    //dpm($form_state['values']);
-    
-    $DATA_adress_nid = $form_state['values']['adresses'];
-    $DATA_transport_type = $form_state['values']['selected_transport_type'];
-    dpm("Address node is : " . $DATA_adress_nid);
-    dpm("Transporttype is : " . $DATA_transport_type);
-    dpm("this data should be used by AJAX to display information about the price");
-    
-  }
-  else{
-    dpm('nu exista form state de values');
-  }
-}
-/**
  * Implements hook_form_alter().
  * @param string $form
  * @param type $form_state
@@ -178,11 +161,6 @@ function fancourier_submit_handler(&$form, &$form_state) {
  * @return type
  */
 function fancourier_estimare_taxetransport_callback($form, $form_state) {
-  //dpm($form_state['values']);
-  //dpm($form_state['values']['addresses']);
-  //dpm($form_state['values']['selected_transport_type']);
-  
-  $shipping_service = 'Standard';
   $shipping_service = $form_state['values']['selected_transport_type'];
   $shipping_adress = $form_state['values']['addresses'];
   $shipping_default = array(
@@ -198,22 +176,40 @@ function fancourier_estimare_taxetransport_callback($form, $form_state) {
   $shipping_override = array(
     'localitate_dest' => $shipping_adress,    
   );
-  $shipping = array_merge($shipping_default, $shipping_override);
-  
   // As long as you're dealing with string keys, array_merge does exactly what you want. 
   //The two arrays are combined, and where the two have the same keys, the values from $second overwrite the values from $first.
-  //  
-   // Get shipping amount.
+  $shipping = array_merge($shipping_default, $shipping_override);
+  
+  // Get shipping amount.
   $db_fan_login = variable_get('fancourier', array());
   $fan = new FanCourier($db_fan_login['login']);
   $amount = $fan->estimateShipping($shipping, $shipping_service);
-  
-  
   $display_frumos = '<h2>Taxa aproximativa : ' . $amount . ' lei </h2>';
   $form['transport_taxes']['#value'] = $amount;
   $form['transport_taxes']['#markup'] = $display_frumos;
-  //dpm($form);
   return $form['transport_taxes'];
 }
 
-
+/**
+ * Implements hook_form_submit();
+ * Deocamdata printam valorile celor 2 field-uri...
+ * @param type $form
+ * @param type $form_state
+ */
+//UNNECESARY IF USING AJAX TO DISPLAY
+//function fancourier_estimare_form_submit($form, &$form_state) {
+//  if (isset($form_state['values'])) {
+//    //dpm('exista formstate de values. il printam');
+//    //dpm($form_state['values']);
+//    
+//    $DATA_adress_nid = $form_state['values']['adresses'];
+//    $DATA_transport_type = $form_state['values']['selected_transport_type'];
+//    dpm("Address node is : " . $DATA_adress_nid);
+//    dpm("Transporttype is : " . $DATA_transport_type);
+//    dpm("this data should be used by AJAX to display information about the price");
+//    
+//  }
+//  else{
+//    dpm('nu exista form state de values');
+//  }
+//}
