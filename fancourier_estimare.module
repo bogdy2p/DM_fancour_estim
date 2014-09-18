@@ -1,8 +1,4 @@
 <?php
-
-//require_once('fancourier.class.php');
-//module_load_include('php', 'fancourier', 'fancourier.class.php');
-
 /*
  * @file
  * To change this license header, choose License Headers in Project Properties.
@@ -26,11 +22,19 @@ function fancourier_estimare_menu() {
   );
   return $items;
 }
-
+/**
+ * Implements hook_form($node, &$form_state)
+ * @param type $form
+ * @param type $form_state
+ * @returns the form.
+ */
 function fancourier_estimare_form($form, &$form_state) {
   
+  //Grabbing form adress data options..
   $adrese = get_adress_data_by_nodeid();
+  //Grabbing form transport types options..
   $grabbed_enabled_transport_types = get_fancourier_services_enabled(); 
+  
   $form['adresses'] = array(
     '#type' => 'select',
     '#title' => 'Adresa Destinatie',
@@ -45,14 +49,16 @@ function fancourier_estimare_form($form, &$form_state) {
     '#options' => $grabbed_enabled_transport_types,
   );
   
-  //$fancourier_array = variable_get('fancourier');
-  
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Estimeaza taxa transport !',   
   );
   return $form;
 }
+/**
+ * EFQ sql querry to return a list of nodes with "adresa" bundle.
+ * @return type List of Objects 
+ */
 function get_adresses_node_object() {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
@@ -66,16 +72,21 @@ if (isset($result['node'])) {
   $addresses_values = array_values($result['node']);
   $addresses_objects = entity_load('node', $addresses_nids);
 }
- // Array Keys , array values
- //$asddd = $addresses_objects[$addresses_nids]->title;
- //dpm($asddd);
- //dpm($result);
-//dpm($addresses_objects);
+//TEST DELETE TEST
+$asd = array();
+foreach ($addresses_values as $key => $value ){
+  $asdfgh[$key] = $value->nid;
+ }
+//dpm($asdfgh);
+//dpm($addresses_values);
+//END TEST (delete) TEST
+
+  //dpm($addresses_objects);
  return $addresses_objects; 
 }
 /**
- * THIS DOESNT GO AS PLANNED
- * @return type
+ * Function to grab nodes , and node's data
+ * @return type array of node id's from the node.
  */
 function get_adress_data_by_nodeid() {
   $objects = get_adresses_node_object();
@@ -87,9 +98,7 @@ function get_adress_data_by_nodeid() {
     ->condition('entity_id', $nodeid_array)
     ->orderBy('field_addressfield_locality', 'DESC')//ORDER BY created
     ->range(0, 500);//LIMIT to 2 records
-
     $results= $query->execute();
-    
   foreach ($results as $key => $value) {
     $entity_id = $value->entity_id;//dpm($value->field_addressfield_thoroughfare);\
     $city = $value->field_addressfield_locality;
@@ -98,32 +107,16 @@ function get_adress_data_by_nodeid() {
     $nume_complet = $value->field_addressfield_name_line;
     //UNCOMMENT TO VIEW COMPLETE DATA    
     //dpm('EntityID : ' . $entity_id . ' Oras: ' . $city . ' Strada: ' . $strada . ' Tara: ' . $cod_tara . ' Nume complet: ' . $nume_complet);
-    $adrese[$strada] = $strada;
+    $adrese[$entity_id] = $strada; // Aici e return-ul pentru select-ul adresei de destinatie
   }
   return $adrese;
 }
-//entity_type (String, 4 characters ) node
-//bundle (String, 6 characters ) adresa
-//deleted (String, 1 characters ) 0
-//entity_id (String, 1 characters ) 9
-//revision_id (String, 1 characters ) 9
-//language (String, 3 characters ) und
-//delta (String, 1 characters ) 0
-//field_addressfield_country (String, 2 characters ) RO
-//field_addressfield_administrative_area (NULL)
-//field_addressfield_sub_administrative_area (NULL)
-//field_addressfield_locality (String, 11 characters ) Targu Mures
-//field_addressfield_dependent_locality (NULL)
-//field_addressfield_postal_code (String, 6 characters ) 550014
-//field_addressfield_thoroughfare (String, 15 characters ) Transilvania 54
-//field_addressfield_premise (String, 0 characters )
-//field_addressfield_sub_premise (NULL)
-//field_addressfield_organisation_name (NULL)
-//field_addressfield_name_line (String, 10 characters ) Vasile Ion
-//field_addressfield_first_name (String, 6 characters ) Vasile
-//field_addressfield_last_name (String, 3 characters ) Ion
-//field_addressfield_data (NULL)
 
+/**
+ * Function that returns an array of the enabled services 
+ * (fancourier transport types) within the database.
+ * @return type array of items.
+ */
 function get_fancourier_services_enabled() {
   $fancourier_variable = variable_get('fancourier');
   $services_enabled = $fancourier_variable['services'];
@@ -131,40 +124,38 @@ function get_fancourier_services_enabled() {
   foreach ($services_enabled as $key => $value) {
      $service_enabled[$key] = $value;
   }
-  //dpm($service_enabled);
   return $service_enabled;
 }
-
+/**
+ * Implements hook_form_submit();
+ * Deocamdata printam valorile celor 2 field-uri...
+ * @param type $form
+ * @param type $form_state
+ */
 function fancourier_estimare_form_submit($form, &$form_state) {
-   if (isset($form_state['values'])) {
+  if (isset($form_state['values'])) {
     dpm('exista formstate de values. il printam');
     dpm($form_state['values']);
   }
   else{
     dpm('nu exista form state de values');
   }
-  
-// dpm('save button has been pressed. here\'s the form: ');
-// dpm($form);
-// dpm('the form state dupa submit: ');
-// dpm($form_state);
-  
+ 
 }
-
-//Functia la care am renuntat
-//function get_addresses_node_ids() {
-//  $query_addresses = get_adresses_node_object();
-//  $nodeids_adresses = array();
-//  foreach ($query_addresses as $key => $values){
-//    $nodeids_adresses[$key] = $values->nid;
-//  }
-//return $nodeids_adresses;
-//}
+/**
+ * Implements hook_form_alter().
+ * @param string $form
+ * @param type $form_state
+ * @param type $form_id
+ */
 function fancourier_estimare_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'fancourier_form') {
      $form['#submit'][] = 'fancourier_submit_handler';
   }
 }
+/**
+ * Function to redirect after clicking submit
+ */
 function fancourier_submit_handler(&$form, &$form_state) {
   $form_state['redirect'] = 'admin/config/fancourier';
 }
